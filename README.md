@@ -7,6 +7,12 @@ todo
 pytest 
 ruff
 black
+serialization
+docs gen
+maintenance scripts
+fe
+docs to ts types?
+
 
 commands dump for db mig
 
