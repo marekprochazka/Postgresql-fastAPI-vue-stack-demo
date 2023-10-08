@@ -13,6 +13,11 @@ class DoesNotExist(Exception):
     pass
 
 
+"""
+TODO add filter params to list method?
+"""
+
+
 class BaseModelRepository(abc.ABC, Generic[M]):
     model: M = None
     session: Session = None
@@ -50,6 +55,8 @@ class BaseModelRepository(abc.ABC, Generic[M]):
     def patch(self, instance_id, patch_data: dict) -> M:
         instance = self.get_instance(instance_id)
         for key, value in patch_data.items():
+            if not hasattr(instance, key):
+                raise AttributeError(f"{key} is not a valid attribute")
             setattr(instance, key, value)
         self.session.add(instance)
         self.session.commit()
@@ -60,4 +67,3 @@ class BaseModelRepository(abc.ABC, Generic[M]):
         instance = self.get_instance(instance_id)
         self.session.delete(instance)
         self.session.commit()
-
