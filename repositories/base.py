@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Callable, Union
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -7,7 +7,6 @@ from sqlmodel import Session
 from sqlmodel import select
 
 import abc
-
 
 from models.base import BaseUUIDModel
 
@@ -73,11 +72,13 @@ class BaseModelRepository(abc.ABC, Generic[M, R, L, C, P]):
         self.session.refresh(instance)
         return instance
 
-    def get_list_statement(self) -> select:
+    def get_base_list_statement(self) -> select:
         return select(self.model)
 
-    def list(self, limit: int | None = None) -> list[L]:
-        statement = self.get_list_statement()
+    def list(self, limit: int | None = None,
+             statement: Union[select, None] = None) -> list[L]:
+        if statement is None:
+            statement = self.get_base_list_statement()
         if limit is not None:
             statement = statement.limit(limit)
         return [self.schema_list.from_orm(instance) for instance in self.session.exec(statement)]

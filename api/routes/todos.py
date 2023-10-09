@@ -78,3 +78,18 @@ async def delete_todo(
 ) -> None:
     repository = get_repository(TodoRepository)
     repository.delete(todo_id)
+
+
+@router.get(
+    "/list/filter",
+    response_model=list[Optional[TodoRepository.schema_list]],
+    status_code=200,
+    summary="List todos by done query param (default is False)",
+    name="todos:list_by_done",
+)
+async def todos_by_done(
+        limit: int = Query(default=10, ge=1, le=100),
+        done: bool = Query(default=False),
+) -> list[Optional[TodoRepository.schema_list]]:
+    repository = get_repository(TodoRepository)
+    return repository.list_by_done(limit, done)
