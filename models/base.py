@@ -1,7 +1,6 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 from sqlmodel import Field, SQLModel
-import abc
 
 
 class BaseUUIDModel(SQLModel):

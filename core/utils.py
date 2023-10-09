@@ -1,6 +1,6 @@
-from typing import TypedDict
 
 from repositories.base import M
+
 
 def model_to_api(instance: M) -> dict:
     return instance.to_dict()
@@ -19,5 +19,3 @@ def selected_fields(instance: M, fields: list[str]) -> dict:
 
 def selected_fields_list(instances: list[M], fields: list[str]) -> list[dict]:
     return [selected_fields(instance, fields) for instance in instances]
-
-

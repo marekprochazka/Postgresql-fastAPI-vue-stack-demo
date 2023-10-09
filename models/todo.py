@@ -1,4 +1,4 @@
-from sqlmodel import BigInteger, Column, Field, SQLModel
+from sqlmodel import Field
 
 from models.base import BaseUUIDModel
 

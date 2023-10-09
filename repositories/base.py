@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TypeVar, Generic, Callable, Union
+from typing import TypeVar, Generic, Union
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -53,10 +53,7 @@ class BaseModelRepository(abc.ABC, Generic[M, R, L, C, P]):
             )
 
     def __get_instance(self, instance_id: UUID) -> M:
-        statement = (
-            select(self.model)
-            .where(self.model.id == instance_id)
-        )
+        statement = select(self.model).where(self.model.id == instance_id)
         instance = self.session.exec(statement).first()
         if instance is None:
             raise DoesNotExist
@@ -75,13 +72,17 @@ class BaseModelRepository(abc.ABC, Generic[M, R, L, C, P]):
     def get_base_list_statement(self) -> select:
         return select(self.model)
 
-    def list(self, limit: int | None = None,
-             statement: Union[select, None] = None) -> list[L]:
+    def list(
+        self, limit: int | None = None, statement: Union[select, None] = None
+    ) -> list[L]:
         if statement is None:
             statement = self.get_base_list_statement()
         if limit is not None:
             statement = statement.limit(limit)
-        return [self.schema_list.from_orm(instance) for instance in self.session.exec(statement)]
+        return [
+            self.schema_list.from_orm(instance)
+            for instance in self.session.exec(statement)
+        ]
 
     def patch(self, instance_id: UUID, patch_data: P) -> R:
         instance = self.__get_instance(instance_id)

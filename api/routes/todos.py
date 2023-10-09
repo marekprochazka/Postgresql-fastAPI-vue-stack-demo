@@ -15,10 +15,9 @@ router = APIRouter(tags=["todos"])
     status_code=200,
     summary="List todos",
     name="todos:list",
-
 )
 async def todos(
-        limit: int = Query(default=10, ge=1, le=100),
+    limit: int = Query(default=10, ge=1, le=100),
 ) -> list[Optional[TodoRepository.schema_list]]:
     repository = get_repository(TodoRepository)
     return repository.list(limit)
@@ -32,7 +31,7 @@ async def todos(
     name="todos:create",
 )
 async def create_todo(
-        schema: TodoRepository.schema_create,
+    schema: TodoRepository.schema_create,
 ) -> TodoRepository.schema_retrieve:
     repository = get_repository(TodoRepository)
     return repository.create(schema)
@@ -46,7 +45,7 @@ async def create_todo(
     name="todos:retrieve",
 )
 async def retrieve_todo(
-        todo_id: UUID,
+    todo_id: UUID,
 ) -> TodoRepository.schema_retrieve:
     repository = get_repository(TodoRepository)
     return repository.get(todo_id)
@@ -60,8 +59,8 @@ async def retrieve_todo(
     name="todos:patch",
 )
 async def patch_todo(
-        todo_id: UUID,
-        schema: TodoRepository.schema_patch,
+    todo_id: UUID,
+    schema: TodoRepository.schema_patch,
 ) -> TodoRepository.schema_retrieve:
     repository = get_repository(TodoRepository)
     return repository.patch(todo_id, schema)
@@ -74,7 +73,7 @@ async def patch_todo(
     name="todos:delete",
 )
 async def delete_todo(
-        todo_id: UUID,
+    todo_id: UUID,
 ) -> None:
     repository = get_repository(TodoRepository)
     repository.delete(todo_id)
@@ -88,8 +87,8 @@ async def delete_todo(
     name="todos:list_by_done",
 )
 async def todos_by_done(
-        limit: int = Query(default=10, ge=1, le=100),
-        done: bool = Query(default=False),
+    limit: int = Query(default=10, ge=1, le=100),
+    done: bool = Query(default=False),
 ) -> list[Optional[TodoRepository.schema_list]]:
     repository = get_repository(TodoRepository)
     return repository.list_by_done(limit, done)
