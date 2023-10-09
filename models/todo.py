@@ -1,9 +1,10 @@
 from sqlmodel import BigInteger, Column, Field, SQLModel
 
+from models.base import BaseUUIDModel
 
-class Todo(SQLModel, table=True):
-    id: int = Field(
-        sa_column=Column(BigInteger(), primary_key=True, autoincrement=False)
-    )
+
+class Todo(BaseUUIDModel, table=True):
     content: str = Field(default="!")
     done: bool = Field(default=False)
+
+    __tablename__ = "todo"

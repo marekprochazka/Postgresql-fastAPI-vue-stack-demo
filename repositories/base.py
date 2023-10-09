@@ -1,12 +1,21 @@
+from datetime import datetime
 from typing import TypeVar, Generic
 from uuid import UUID
 
-from sqlmodel import Session, SQLModel
+from pydantic import BaseModel
+from sqlmodel import Session
 from sqlmodel import select
 
 import abc
 
-M = TypeVar("M", bound=SQLModel)
+
+from models.base import BaseUUIDModel
+
+M = TypeVar("M", bound=BaseUUIDModel)
+R = TypeVar("R", bound=BaseModel)
+L = TypeVar("L", bound=BaseModel)
+C = TypeVar("C", bound=BaseModel)
+P = TypeVar("P", bound=BaseModel)
 
 
 class DoesNotExist(Exception):
@@ -18,19 +27,33 @@ TODO add filter params to list method?
 """
 
 
-class BaseModelRepository(abc.ABC, Generic[M]):
-    model: M = None
+class BaseModelRepository(abc.ABC, Generic[M, R, L, C, P]):
+    model: type[M] = None
     session: Session = None
+    schema_retrieve: type[R] = None
+    schema_list: type[R] = None
+    schema_create: type[C] = None
+    schema_patch: type[P] = None
 
     def __init__(self, session: Session):
         self.session = session
 
-        if not issubclass(self.model, SQLModel):
+        if not issubclass(self.model, BaseUUIDModel):
             raise NotImplementedError(
-                "model must be subclass of sqlmodel.SQLModel"
+                "model must be subclass of models.base.BaseUUIDModel"
             )
 
-    def get_instance(self, instance_id: UUID) -> M:
+        if not issubclass(self.schema_retrieve, BaseModel):
+            raise NotImplementedError(
+                "schema_retrieve must be subclass of pydantic.BaseModel"
+            )
+
+        if not issubclass(self.schema_list, BaseModel):
+            raise NotImplementedError(
+                "schema_list must be subclass of pydantic.BaseModel"
+            )
+
+    def __get_instance(self, instance_id: UUID) -> M:
         statement = (
             select(self.model)
             .where(self.model.id == instance_id)
@@ -40,30 +63,36 @@ class BaseModelRepository(abc.ABC, Generic[M]):
             raise DoesNotExist
         return instance
 
-    def create(self, instance: M) -> M:
+    def get(self, instance_id: UUID) -> R:
+        return self.schema_retrieve.from_orm(self.__get_instance(instance_id))
+
+    def create(self, schema_instance: C) -> R:
+        instance = self.model(**schema_instance.dict())
         self.session.add(instance)
         self.session.commit()
         self.session.refresh(instance)
         return instance
 
-    def list(self, limit: int | None = None) -> list[M]:
-        statement = select(self.model)
+    def get_list_statement(self) -> select:
+        return select(self.model)
+
+    def list(self, limit: int | None = None) -> list[L]:
+        statement = self.get_list_statement()
         if limit is not None:
             statement = statement.limit(limit)
-        return self.session.exec(statement).all()
+        return [self.schema_list.from_orm(instance) for instance in self.session.exec(statement)]
 
-    def patch(self, instance_id, patch_data: dict) -> M:
-        instance = self.get_instance(instance_id)
-        for key, value in patch_data.items():
-            if not hasattr(instance, key):
-                raise AttributeError(f"{key} is not a valid attribute")
-            setattr(instance, key, value)
+    def patch(self, instance_id: UUID, patch_data: P) -> R:
+        instance = self.__get_instance(instance_id)
+        instance.x_updated = datetime.utcnow()
+        for field, value in patch_data.dict(exclude_unset=True).items():
+            setattr(instance, field, value)
         self.session.add(instance)
         self.session.commit()
         self.session.refresh(instance)
-        return instance
+        return self.schema_retrieve.from_orm(instance)
 
     def delete(self, instance_id: UUID) -> None:
-        instance = self.get_instance(instance_id)
+        instance = self.__get_instance(instance_id)
         self.session.delete(instance)
         self.session.commit()
